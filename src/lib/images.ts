@@ -1,5 +1,5 @@
 const files = import.meta.glob(
-  "/src/assets/images/**/*.{jpg,jpeg,png,webp,avif}",
+  "/src/assets/images/**/*.{jpg,jpeg,png,webp,avif,JPG,JPEG,PNG,WEBP,AVIF}",
   { eager: true, query: "?url", import: "default" },
 ) as Record<string, string>;
 export function getImage(key: string): string | undefined {

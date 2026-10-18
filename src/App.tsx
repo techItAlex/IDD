@@ -46,6 +46,7 @@ import {
   Compass,
   Menu,
 } from "lucide-react";
+import homeTransitImage from "./assets/images/illustrations/home-transit.png";
 import { routes as seed, users, type Route, type Question } from "./data";
 import { useApp } from "./store";
 import { getImage } from "./lib/images";
@@ -540,10 +541,11 @@ function Home() {
           </div>
         </div>
         <div className="hero-art">
-          <div className="sun" />
-          <div className="city">▥　▦　▥　▧　▥</div>
-          <div className="jeep">🚌</div>
-          <div className="road" />
+          <img
+            className="hero-art-image"
+            src={homeTransitImage}
+            alt="Illustration of a jeepney and train traveling between two stops"
+          />
         </div>
       </section>
       <Section title="Trending routes" action="See all" to="/guides">
@@ -2215,7 +2217,6 @@ function Login({ returnTo }: { returnTo?: string }) {
               alt="A jeepney on a city commute"
             />
             <div className="login-photo-shade" />
-            <h2>Commute better, together.</h2>
           </>
         ) : (
           <>
@@ -2223,7 +2224,6 @@ function Login({ returnTo }: { returnTo?: string }) {
             <div className="city">▥　▦　▥　▧　▥</div>
             <div className="jeep">🚌</div>
             <div className="road" />
-            <h2>Commute better, together.</h2>
           </>
         )}
       </div>
