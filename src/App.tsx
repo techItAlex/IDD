@@ -4,6 +4,7 @@ import {
   RouterProvider,
   Outlet,
   Link,
+  NavLink,
   useLocation,
   useNavigate,
   useParams,
@@ -398,10 +399,10 @@ function Shell() {
           </span>
         </Link>
         <nav>
-          <Link to="/">Home</Link>
-          <Link to="/guides">Guides</Link>
-          <Link to="/community">Community</Link>
-          <Link to="/profile">Profile</Link>
+          <NavLink to="/" end>Home</NavLink>
+          <NavLink to="/guides">Guides</NavLink>
+          <NavLink to="/community">Community</NavLink>
+          <NavLink to="/profile">Profile</NavLink>
         </nav>
         <div className="nav-search">
           <SearchBox />
@@ -440,14 +441,14 @@ function Shell() {
         )}
       </main>
       <nav className="bottom-nav">
-        <Link to="/">
+        <NavLink to="/" end>
           <HomeIcon />
           Home
-        </Link>
-        <Link to="/guides">
+        </NavLink>
+        <NavLink to="/guides">
           <Map />
           Guides
-        </Link>
+        </NavLink>
         <Link
           className="plus-tab"
           to="/contribute"
@@ -460,14 +461,14 @@ function Shell() {
         >
           <Plus />
         </Link>
-        <Link to="/community">
+        <NavLink to="/community">
           <Users />
           Community
-        </Link>
-        <Link to="/profile">
+        </NavLink>
+        <NavLink to="/profile">
           <User />
           Profile
-        </Link>
+        </NavLink>
       </nav>
       <Toast />
       <LoginPrompt />
