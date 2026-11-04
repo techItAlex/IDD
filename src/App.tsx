@@ -144,6 +144,17 @@ function GoogleMark() {
     </span>
   );
 }
+// "Cubao to BGC" -> both, "to Cubao" -> destination only, "from Cubao" -> origin only
+function parseQuery(q: string) {
+  const text = q.trim();
+  let m = text.match(/^(.+?)\s+to\s+(.+)$/i);
+  if (m) return { from: m[1].trim(), to: m[2].trim(), text: "" };
+  m = text.match(/^to\s+(.+)$/i);
+  if (m) return { from: "", to: m[1].trim(), text: "" };
+  m = text.match(/^from\s+(.+)$/i);
+  if (m) return { from: m[1].trim(), to: "", text: "" };
+  return { from: "", to: "", text };
+}
 function SearchBox({ initial = "" }: { initial?: string }) {
   const [query, set] = useState(initial);
   const nav = useNavigate();
@@ -152,7 +163,11 @@ function SearchBox({ initial = "" }: { initial?: string }) {
       className="searchbox"
       onSubmit={(e) => {
         e.preventDefault();
-        nav("/search?q=" + encodeURIComponent(query || "Cubao to BGC"));
+        nav(
+          query.trim()
+            ? "/search?q=" + encodeURIComponent(query.trim())
+            : "/search",
+        );
       }}
     >
       <Search size={19} />
@@ -176,17 +191,24 @@ function CommuteSearch() {
       className="commute-search"
       onSubmit={(e) => {
         e.preventDefault();
-        nav(
-          "/search?q=" +
-            encodeURIComponent(`${from || "Cubao"} to ${to || "BGC"}`),
-        );
+        const a = from.trim(),
+          b = to.trim();
+        if (!a && !b) return;
+        const q = a && b ? `${a} to ${b}` : b ? `to ${b}` : `from ${a}`;
+        useApp.setState((s) => ({
+          recent: [
+            q,
+            ...s.recent.filter((x) => x.toLowerCase() !== q.toLowerCase()),
+          ].slice(0, 8),
+        }));
+        nav("/search?q=" + encodeURIComponent(q));
       }}
     >
       <input
         aria-label="From"
         value={from}
         onChange={(e) => setFrom(e.target.value)}
-        placeholder="From: Origin or landmark"
+        placeholder="From (optional)"
       />
       <button
         type="button"
@@ -202,7 +224,7 @@ function CommuteSearch() {
         aria-label="To"
         value={to}
         onChange={(e) => setTo(e.target.value)}
-        placeholder="To: Destination or landmark"
+        placeholder="To: any destination"
       />
       <button className="btn" aria-label="Find routes">
         <Search size={17} /> Find routes
@@ -937,15 +959,23 @@ function SearchPage() {
     [q, setQ] = useState(initial),
     [tab, setTab] = useState("Guides"),
     [filter, setFilter] = useState(false);
-  const results = store.routes.filter((r) =>
-    (r.title + " " + r.origin + " " + r.destination + " " + r.tags.join(" "))
-      .toLowerCase()
-      .includes(q.toLowerCase()),
+  useEffect(() => setQ(initial), [initial]);
+  const { from, to, text } = parseQuery(q),
+    has = (value: string, term: string) =>
+      value.toLowerCase().includes(term.toLowerCase());
+  const results = store.routes.filter(
+    (r) =>
+      (!from || has(r.origin, from)) &&
+      (!to || has(r.destination, to)) &&
+      (!text ||
+        has(
+          r.title + " " + r.origin + " " + r.destination + " " + r.tags.join(" "),
+          text,
+        )),
   );
+  const terms = [from, to, text].filter(Boolean);
   const qs = store.questions.filter((x) =>
-    (x.title + " " + x.body + " " + x.tags.join(" "))
-      .toLowerCase()
-      .includes(q.toLowerCase()),
+    terms.every((t) => has(x.title + " " + x.body + " " + x.tags.join(" "), t)),
   );
   const submit = (e: any) => {
     e.preventDefault();
@@ -1013,6 +1043,12 @@ function SearchPage() {
               <Filter />
             </button>
           </div>
+          {tab === "Guides" && (from || to) && (
+            <p className="muted">
+              Routes{from && <> from <b>{from}</b></>}
+              {to && <> to <b>{to}</b></>}
+            </p>
+          )}
           {tab === "Guides" ? (
             results.length ? (
               <div className="guide-grid">
@@ -1930,7 +1966,7 @@ function Wizard() {
   const submit = () => {
     const route: Route = {
       id: "u" + Date.now(),
-      title: `${d.origin} → ${d.destination}`,
+      title: `${d.origin} to ${d.destination}`,
       origin: d.origin,
       destination: d.destination,
       modes: d.modes || ["jeepney"],
@@ -2160,7 +2196,7 @@ function Wizard() {
               id: "draft",
               title:
                 d.origin && d.destination
-                  ? `${d.origin} → ${d.destination}`
+                  ? `${d.origin} to ${d.destination}`
                   : "Your route preview",
               origin: d.origin || "Origin",
               destination: d.destination || "Destination",

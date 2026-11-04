@@ -31,7 +31,7 @@ export type Route = {
 const baseRoutes: Route[] = [
   {
     id: "r1",
-    title: "Santolan → Araneta Center-Cubao",
+    title: "Santolan to Araneta Center-Cubao",
     origin: "Santolan",
     destination: "Araneta Center-Cubao",
     modes: ["lrt"],
@@ -63,7 +63,7 @@ const baseRoutes: Route[] = [
   },
   {
     id: "r2",
-    title: "Cubao → BGC",
+    title: "Cubao to BGC",
     origin: "Cubao",
     destination: "BGC",
     modes: ["mrt", "jeepney"],
@@ -114,7 +114,7 @@ const baseRoutes: Route[] = [
   },
   {
     id: "r3",
-    title: "Cubao → BGC (via Ayala)",
+    title: "Cubao to BGC (via Ayala)",
     origin: "Cubao",
     destination: "BGC (via Ayala)",
     modes: ["mrt", "bus"],
@@ -154,7 +154,7 @@ const baseRoutes: Route[] = [
   },
   {
     id: "r4",
-    title: "Cubao → BGC",
+    title: "Cubao to BGC",
     origin: "Cubao",
     destination: "BGC",
     modes: ["jeepney", "bus"],
@@ -186,7 +186,7 @@ const baseRoutes: Route[] = [
   },
   {
     id: "r5",
-    title: "PITX → NAIA Terminal 3",
+    title: "PITX to NAIA Terminal 3",
     origin: "PITX",
     destination: "NAIA Terminal 3",
     modes: ["uv"],
@@ -221,7 +221,7 @@ const baseRoutes: Route[] = [
   },
   {
     id: "r6",
-    title: "Cubao → SM North",
+    title: "Cubao to SM North",
     origin: "Cubao",
     destination: "SM North",
     modes: ["mrt", "walk"],
@@ -256,7 +256,7 @@ const baseRoutes: Route[] = [
   },
   {
     id: "r7",
-    title: "Cubao → UP Diliman",
+    title: "Cubao to UP Diliman",
     origin: "Cubao",
     destination: "UP Diliman",
     modes: ["lrt", "jeepney"],
@@ -297,7 +297,7 @@ const baseRoutes: Route[] = [
   },
   {
     id: "r8",
-    title: "Baclaran → SM Manila",
+    title: "Baclaran to SM Manila",
     origin: "Baclaran",
     destination: "SM Manila",
     modes: ["jeepney"],

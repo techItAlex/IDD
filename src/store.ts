@@ -170,7 +170,7 @@ const start = () => ({
       to: "/community",
     },
     {
-      title: "Your route 'Cubao → UP Diliman' is pending review",
+      title: "Your route 'Cubao to UP Diliman' is pending review",
       read: false,
       to: "/profile",
     },

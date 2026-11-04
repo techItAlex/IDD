@@ -45,7 +45,7 @@ export function buildRoute(i: RouteInput): Route {
     .reduce((sum, s) => sum + s.minutes, 0);
   return {
     id: `r${i.n}`,
-    title: `${i.origin} → ${i.destination}`,
+    title: `${i.origin} to ${i.destination}`,
     origin: i.origin,
     destination: i.destination,
     modes: rides.length
