@@ -18,6 +18,7 @@ type Answer = {
 type State = {
   isLoggedIn: boolean;
   hasEntered: boolean;
+  seenWelcome: boolean;
   points: number;
   savedRouteIds: string[];
   compareIds: string[];
@@ -149,6 +150,7 @@ Object.assign(defaultAnswers, {
 const start = () => ({
   isLoggedIn: false,
   hasEntered: false,
+  seenWelcome: false,
   points: 320,
   savedRouteIds: [],
   compareIds: ["r1", "r2"],
@@ -206,6 +208,7 @@ export const useApp = create<State>()(
         set({
           isLoggedIn: true,
           hasEntered: true,
+          seenWelcome: true,
           loginOpen: false,
           pending: null,
         });

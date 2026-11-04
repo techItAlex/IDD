@@ -3313,3 +3313,50 @@ body:has(.login-layout) .page {
     transition: none !important;
   }
 }
+
+/* ---------- Guest welcome ---------- */
+.dialog.welcome {
+  max-width: 420px;
+  text-align: left;
+}
+.welcome-perks {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 6px;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-2);
+  font-size: 14px;
+}
+.welcome-perks li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.welcome-perks svg {
+  flex: none;
+  padding: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--green-soft);
+  color: var(--green);
+}
+.welcome-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 4px 0;
+}
+.welcome-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--line);
+  transition: all 0.2s;
+}
+.welcome-dots i.active {
+  width: 20px;
+  border-radius: 4px;
+  background: var(--green);
+}

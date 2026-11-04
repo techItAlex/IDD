@@ -377,14 +377,89 @@ function LoginPrompt() {
     </div>
   );
 }
+const welcomeSlides = [
+  {
+    icon: Compass,
+    title: "Find your way, step by step",
+    text: "Search any origin and destination to get real commute guides with fares, travel times and tips.",
+    perks: ["Compare routes side by side", "Filter by time of day and mode"],
+  },
+  {
+    icon: Users,
+    title: "Ask the commuter community",
+    text: "Browse questions and answers from people who ride these routes every day.",
+    perks: ["Read answers and tips", "Search by #tag"],
+  },
+  {
+    icon: Lock,
+    title: "Log in to do more",
+    text: "You can explore as a guest. An account lets you take part and earn points.",
+    perks: ["Save routes", "Ask, answer and upvote", "Share your own route guide"],
+  },
+];
+function GuestWelcome() {
+  const nav = useNavigate(),
+    [i, setI] = useState(0),
+    slide = welcomeSlides[i],
+    Icon = slide.icon,
+    last = i === welcomeSlides.length - 1,
+    done = () => useApp.setState({ seenWelcome: true });
+  return (
+    <div className="overlay">
+      <section
+        className="dialog welcome"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Welcome to IDD"
+      >
+        <div className="round-icon">
+          <Icon />
+        </div>
+        <p className="eyebrow">
+          WELCOME, GUEST · {i + 1} OF {welcomeSlides.length}
+        </p>
+        <h2>{slide.title}</h2>
+        <p className="muted">{slide.text}</p>
+        <ul className="welcome-perks">
+          {slide.perks.map((p) => (
+            <li key={p}>
+              <Check size={16} /> {p}
+            </li>
+          ))}
+        </ul>
+        <div className="welcome-dots" aria-hidden="true">
+          {welcomeSlides.map((_, n) => (
+            <i key={n} className={n === i ? "active" : ""} />
+          ))}
+        </div>
+        {last ? (
+          <Button
+            onClick={() => {
+              done();
+              nav("/login", { state: { from: "/" } });
+            }}
+          >
+            Log in or sign up
+          </Button>
+        ) : (
+          <Button onClick={() => setI(i + 1)}>Next</Button>
+        )}
+        <button className="text-btn" onClick={done}>
+          Skip
+        </button>
+      </section>
+    </div>
+  );
+}
 function Shell() {
   const loc = useLocation(),
     nav = useNavigate(),
     login = useApp((s) => s.login),
     logged = useApp((s) => s.isLoggedIn),
     hasEntered = useApp((s) => s.hasEntered),
+    seenWelcome = useApp((s) => s.seenWelcome),
     open = useApp((s) => s.requireLogin),
-    unread = useApp((s) => s.notifications.some((n) => !n.read));
+    unread = useApp((s) => s.isLoggedIn && s.notifications.some((n) => !n.read));
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [loc.pathname]);
@@ -472,6 +547,7 @@ function Shell() {
       </nav>
       <Toast />
       <LoginPrompt />
+      {hasEntered && !logged && !seenWelcome && <GuestWelcome />}
     </>
   );
 }
@@ -504,7 +580,11 @@ function Home() {
   const logged = useApp((s) => s.isLoggedIn),
     open = useApp((s) => s.requireLogin),
     nav = useNavigate(),
-    questions = useApp((s) => s.questions);
+    unread = useApp((s) => s.isLoggedIn && s.notifications.some((n) => !n.read)),
+    questions = useApp((s) => s.questions),
+    hour = new Date().getHours(),
+    greeting =
+      hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   return (
     <>
       <div className="mobile-brand">
@@ -517,7 +597,7 @@ function Home() {
         </Link>
         <Link className="bell" to="/notifications">
           <Bell />
-          <i />
+          {unread && <i />}
         </Link>
         {!logged && (
           <Link className="mobile-login" to="/login" state={{ from: "/" }}>
@@ -528,7 +608,9 @@ function Home() {
       <section className="hero">
         <div className="hero-copy">
           <p className="eyebrow">COMMUTE BETTER, TOGETHER</p>
-          <h1>Good morning, {logged ? "Alex" : "Commuter"}!</h1>
+          <h1>
+            {greeting}, {logged ? "Alex" : "Commuter"}!
+          </h1>
           <p className="hero-lead">Where do you need to go?</p>
           <CommuteSearch />
           <div className="popular">
@@ -774,12 +856,6 @@ function Guides() {
         <div className="guide-results">
           <div className="results-heading">
             <b>{list.length} route guides</b>
-            <button
-              className="icon-btn mobile-filter-icon"
-              onClick={() => setShow(true)}
-            >
-              <Filter />
-            </button>
           </div>
           {list.length ? (
             <div className="guide-grid">
@@ -2353,7 +2429,11 @@ function Login({ returnTo }: { returnTo?: string }) {
         <button
           className="text-btn guest-link"
           onClick={() => {
-            useApp.setState({ hasEntered: true, isLoggedIn: false });
+            useApp.setState({
+              hasEntered: true,
+              isLoggedIn: false,
+              seenWelcome: false,
+            });
             nav(destination, { replace: true });
           }}
         >
@@ -2635,6 +2715,18 @@ function Notifications() {
   const store = useApp(),
     nav = useNavigate();
   const notes = store.notifications;
+  if (!store.isLoggedIn)
+    return (
+      <>
+        <Header title="Notifications" />
+        <Empty
+          title="Log in to see notifications"
+          detail="Replies, upvotes and updates on your routes will show up here."
+          action="Log in or sign up"
+          onClick={() => nav("/login", { state: { from: "/notifications" } })}
+        />
+      </>
+    );
   return (
     <>
       <Header
@@ -2734,15 +2826,17 @@ function Settings() {
         >
           Reset demo data <Trash2 />
         </button>
-        <button
-          className="setting-row"
-          onClick={() => {
-            store.logout();
-            nav("/");
-          }}
-        >
-          Log out <LogIn />
-        </button>
+        {store.isLoggedIn && (
+          <button
+            className="setting-row"
+            onClick={() => {
+              store.logout();
+              nav("/");
+            }}
+          >
+            Log out <LogIn />
+          </button>
+        )}
       </div>
     </>
   );
