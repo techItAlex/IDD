@@ -40,6 +40,7 @@ type State = {
   save: (id: string) => void;
   compare: (id: string) => void;
   upvote: (id: string) => void;
+  deleteRoute: (id: string) => void;
   postQuestion: (q: Question) => void;
   postAnswer: (qid: string, text: string) => void;
   accept: (qid: string, aid: string) => void;
@@ -262,6 +263,14 @@ export const useApp = create<State>()(
           ),
         }));
       },
+      deleteRoute: (id) => {
+        set((s) => ({
+          routes: s.routes.filter((r) => r.id !== id),
+          savedRouteIds: s.savedRouteIds.filter((x) => x !== id),
+          compareIds: s.compareIds.filter((x) => x !== id),
+        }));
+        get().addToast("Route deleted");
+      },
       postQuestion: (q) => {
         set((s) => ({ questions: [q, ...s.questions], points: s.points + 5 }));
         get().addToast("Your question has been posted!");
@@ -307,6 +316,24 @@ export const useApp = create<State>()(
       migrate: (persisted: any) => ({ ...persisted, hasEntered: false }),
       // Guests are asked again on a fresh page load; login state still persists.
       partialize: (state) => ({ ...state, hasEntered: false }),
+      // Seed routes always come from data.ts so edits there reach returning visitors;
+      // only the helpful count and user-submitted routes are kept from storage.
+      merge: (persisted: any, current) => {
+        const saved: Route[] = persisted?.routes ?? [];
+        const savedById = new Map(saved.map((r) => [r.id, r]));
+        const seedIds = new Set(seed.map((r) => r.id));
+        return {
+          ...current,
+          ...persisted,
+          routes: [
+            ...saved.filter((r) => !seedIds.has(r.id)),
+            ...seed.map((r) => ({
+              ...r,
+              helpfulCount: savedById.get(r.id)?.helpfulCount ?? r.helpfulCount,
+            })),
+          ],
+        };
+      },
     },
   ),
 );

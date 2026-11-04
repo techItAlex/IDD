@@ -242,7 +242,7 @@ function RouteCard({ route, full = false }: { route: Route; full?: boolean }) {
             <Status status={route.status} />
             <span>
               <Star size={14} fill="currentColor" className="star" />{" "}
-              {route.rating} ({route.ratingCount})
+              {route.ratingCount ? `${route.rating} (${route.ratingCount})` : "New"}
             </span>
           </div>
         </div>
@@ -1029,7 +1029,9 @@ function RouteDetail() {
                 <Status status={route.status} />
                 <span>
                   <Star className="star" fill="currentColor" size={15} />{" "}
-                  {route.rating} ({route.ratingCount} ratings)
+                  {route.ratingCount
+                    ? `${route.rating} (${route.ratingCount} ratings)`
+                    : "No ratings yet"}
                 </span>
               </div>
             </div>
@@ -2132,6 +2134,8 @@ function Success() {
 }
 function MyGuide() {
   const { id = "" } = useParams(),
+    nav = useNavigate(),
+    deleteRoute = useApp((s) => s.deleteRoute),
     r = useApp((s) => s.routes.find((x) => x.id === id));
   return (
     <>
@@ -2161,6 +2165,18 @@ function MyGuide() {
             ))}
             <p>{r.description}</p>
           </div>
+          {r.authorId === "u-alex" && (
+            <Button
+              kind="outline"
+              onClick={() => {
+                if (!confirm("Delete this route? This can't be undone.")) return;
+                deleteRoute(r.id);
+                nav("/profile");
+              }}
+            >
+              Delete this route
+            </Button>
+          )}
           <Link to="/profile" className="text-link">
             View profile activity →
           </Link>

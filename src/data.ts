@@ -1,3 +1,5 @@
+import { buildRoutes } from "./lib/buildRoute";
+import { collectedRoutes } from "./collected-routes";
 export type Mode =
   "jeepney" | "bus" | "mrt" | "lrt" | "uv" | "taxi" | "train" | "walk";
 export type Route = {
@@ -26,10 +28,10 @@ export type Route = {
   helpfulCount: number;
   timeOfDay?: string[];
 };
-export const routes: Route[] = [
+const baseRoutes: Route[] = [
   {
     id: "r1",
-    title: "LRT-2 Santolan → Cubao",
+    title: "Santolan → Araneta Center-Cubao",
     origin: "Santolan",
     destination: "Araneta Center-Cubao",
     modes: ["lrt"],
@@ -61,7 +63,7 @@ export const routes: Route[] = [
   },
   {
     id: "r2",
-    title: "MRT-3 + Jeepney",
+    title: "Cubao → BGC",
     origin: "Cubao",
     destination: "BGC",
     modes: ["mrt", "jeepney"],
@@ -112,7 +114,7 @@ export const routes: Route[] = [
   },
   {
     id: "r3",
-    title: "MRT-3 + Bus",
+    title: "Cubao → BGC (via Ayala)",
     origin: "Cubao",
     destination: "BGC (via Ayala)",
     modes: ["mrt", "bus"],
@@ -152,7 +154,7 @@ export const routes: Route[] = [
   },
   {
     id: "r4",
-    title: "Jeepney + Bus",
+    title: "Cubao → BGC",
     origin: "Cubao",
     destination: "BGC",
     modes: ["jeepney", "bus"],
@@ -184,7 +186,7 @@ export const routes: Route[] = [
   },
   {
     id: "r5",
-    title: "UV Express",
+    title: "PITX → NAIA Terminal 3",
     origin: "PITX",
     destination: "NAIA Terminal 3",
     modes: ["uv"],
@@ -219,7 +221,7 @@ export const routes: Route[] = [
   },
   {
     id: "r6",
-    title: "MRT-3 + Skybridge",
+    title: "Cubao → SM North",
     origin: "Cubao",
     destination: "SM North",
     modes: ["mrt", "walk"],
@@ -254,7 +256,7 @@ export const routes: Route[] = [
   },
   {
     id: "r7",
-    title: "LRT-2 + Jeepney",
+    title: "Cubao → UP Diliman",
     origin: "Cubao",
     destination: "UP Diliman",
     modes: ["lrt", "jeepney"],
@@ -295,7 +297,7 @@ export const routes: Route[] = [
   },
   {
     id: "r8",
-    title: "Jeepney",
+    title: "Baclaran → SM Manila",
     origin: "Baclaran",
     destination: "SM Manila",
     modes: ["jeepney"],
@@ -332,6 +334,10 @@ export const routes: Route[] = [
     timeOfDay: ["morning", "midday", "evening"],
   },
 ];
+export const routes: Route[] = [
+  ...baseRoutes,
+  ...buildRoutes(collectedRoutes, baseRoutes),
+];
 export const users = [
   { id: "u-alex", name: "Alex Santos", handle: "@alexsantos", verified: false },
   { id: "u-mika", name: "Mika Reyes", handle: "@mikareyes", verified: true },
@@ -349,6 +355,7 @@ export const users = [
   },
   { id: "u-liza", name: "Liza Santos", handle: "@lizas", verified: false },
   { id: "u-renz", name: "Renz Aquino", handle: "@renzaquino", verified: true },
+  { id: "u-idd", name: "IDD Team", handle: "@idd", verified: false },
 ];
 export type Question = {
   id: string;
