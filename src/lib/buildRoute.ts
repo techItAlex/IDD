@@ -12,7 +12,7 @@ export const TAGS = [
   "Transfer difficulty",
 ] as const;
 export type Tag = (typeof TAGS)[number];
-export type TimeOfDay = "morning" | "midday" | "evening" | "night";
+export type TimeOfDay = "morning" | "midday" | "afternoon" | "evening" | "night";
 
 // [mode, instruction, minutes, fare?] — fare only for paid legs
 export type StepInput = [Mode, string, number, number?];
@@ -28,6 +28,7 @@ export type RouteInput = {
   timeOfDay: TimeOfDay[];
   tips: string[];
   description?: string;
+  dateChecked?: string;
 };
 
 const WALK_METERS_PER_MINUTE = 70;
@@ -61,6 +62,7 @@ export function buildRoute(i: RouteInput): Route {
     tags: i.tags,
     tips: i.tips,
     description: i.description,
+    dateChecked: i.dateChecked,
     rating: 0,
     ratingCount: 0,
     status: "unverified",
