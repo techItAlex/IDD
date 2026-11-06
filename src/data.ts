@@ -18,6 +18,7 @@ export type Route = {
   tags: string[];
   tips: string[];
   description?: string;
+  dateChecked?: string;
   imageKey?: string;
   imageUrl?: string;
   rating: number;
