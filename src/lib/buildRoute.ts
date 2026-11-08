@@ -29,6 +29,8 @@ export type RouteInput = {
   tips: string[];
   description?: string;
   dateChecked?: string;
+  source?: string;
+  status?: Route["status"];
 };
 
 const WALK_METERS_PER_MINUTE = 70;
@@ -63,9 +65,10 @@ export function buildRoute(i: RouteInput): Route {
     tips: i.tips,
     description: i.description,
     dateChecked: i.dateChecked,
+    source: i.source,
     rating: 0,
     ratingCount: 0,
-    status: "unverified",
+    status: i.status ?? "unverified",
     authorId: "u-idd",
     helpfulCount: 0,
     timeOfDay: i.timeOfDay,

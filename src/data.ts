@@ -19,6 +19,7 @@ export type Route = {
   tips: string[];
   description?: string;
   dateChecked?: string;
+  source?: string;
   imageKey?: string;
   imageUrl?: string;
   rating: number;
