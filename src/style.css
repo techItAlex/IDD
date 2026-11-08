@@ -502,6 +502,10 @@ select:focus-visible {
   background: #e6e9f7;
   color: #3d4a95;
 }
+.status.incomplete {
+  background: #f9dcd6;
+  color: #a3342a;
+}
 .mode {
   display: inline-flex;
   align-items: center;

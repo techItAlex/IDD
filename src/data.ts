@@ -24,7 +24,7 @@ export type Route = {
   imageUrl?: string;
   rating: number;
   ratingCount: number;
-  status: "verified" | "unverified" | "checking" | "pending";
+  status: "verified" | "unverified" | "checking" | "pending" | "incomplete";
   authorId: string;
   trending?: boolean;
   helpfulCount: number;

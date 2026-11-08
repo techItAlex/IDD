@@ -27,6 +27,7 @@ export type RouteInput = {
   exposure: Route["exposure"];
   timeOfDay: TimeOfDay[];
   tips: string[];
+  transfers?: number; // only for incomplete routes with no steps yet
   description?: string;
   dateChecked?: string;
   source?: string;
@@ -53,12 +54,14 @@ export function buildRoute(i: RouteInput): Route {
     destination: i.destination,
     modes: rides.length
       ? [...new Set(rides.map((s) => s.mode))]
-      : ["walk"],
+      : steps.length
+        ? ["walk"]
+        : [],
     fare: steps.reduce((sum, s) => sum + (s.fare ?? 0), 0),
     totalMinutes: steps.reduce((sum, s) => sum + s.minutes, 0),
     walkingMinutes,
     walkingMeters: walkingMinutes * WALK_METERS_PER_MINUTE,
-    transfers: Math.max(rides.length - 1, 0),
+    transfers: i.transfers ?? Math.max(rides.length - 1, 0),
     exposure: i.exposure,
     steps,
     tags: i.tags,
@@ -83,7 +86,7 @@ export function buildRoutes(inputs: RouteInput[], taken: Route[] = []): Route[] 
     if (ids.has(route.id))
       console.warn(`Duplicate route id ${route.id} (${route.title})`);
     ids.add(route.id);
-    if (!input.steps.length)
+    if (!input.steps.length && input.status !== "incomplete")
       console.warn(`Route ${route.id} (${route.title}) has no steps`);
     return route;
   });

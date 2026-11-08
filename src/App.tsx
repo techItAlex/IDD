@@ -61,6 +61,7 @@ function Status({ status }: { status: Route["status"] }) {
     unverified: "Unverified",
     checking: "For checking",
     pending: "Pending",
+    incomplete: "Incomplete",
   };
   return <span className={"status " + status}>{labels[status]}</span>;
 }
@@ -249,17 +250,21 @@ function RouteCard({ route, full = false }: { route: Route; full?: boolean }) {
               <Mode key={m} mode={m} />
             ))}
           </div>
-          <div className="route-metrics">
-            <b>{money(route.fare)}</b>
-            <span>
-              <Clock size={14} />
-              {route.totalMinutes} min
-            </span>
-            <span>
-              <Footprints size={14} />
-              {route.walkingMinutes} min
-            </span>
-          </div>
+          {route.status === "incomplete" ? (
+            <div className="route-metrics muted">Details coming soon</div>
+          ) : (
+            <div className="route-metrics">
+              <b>{money(route.fare)}</b>
+              <span>
+                <Clock size={14} />
+                {route.totalMinutes} min
+              </span>
+              <span>
+                <Footprints size={14} />
+                {route.walkingMinutes} min
+              </span>
+            </div>
+          )}
           <div className="route-meta">
             <Status status={route.status} />
             <span>
@@ -758,7 +763,7 @@ function FilterPanel({ mobile = false }: { mobile?: boolean }) {
         value={state.time}
         onChange={(e) => set({ filter: { ...state, time: e.target.value } })}
       >
-        {["Any", "Morning", "Midday", "Evening", "Night"].map((x) => (
+        {["Any", "Morning", "Midday", "Afternoon", "Evening", "Night"].map((x) => (
           <option key={x}>{x}</option>
         ))}
       </select>
@@ -823,6 +828,9 @@ function Guides() {
         ({ sheltered: 0, partial: 1, exposed: 2 })[a.exposure] -
         { sheltered: 0, partial: 1, exposed: 2 }[b.exposure],
     );
+  list.sort(
+    (a, b) => Number(a.status === "incomplete") - Number(b.status === "incomplete"),
+  );
   return (
     <>
       <Header
@@ -1107,6 +1115,8 @@ function RouteDetail() {
     );
   const questions = useApp((s) => s.questions);
   const linked = questions.filter((q) => q.routeId === id);
+  const incomplete = route.status === "incomplete",
+    dash = (v: string) => (incomplete ? "—" : v);
   return (
     <>
       <Header
@@ -1150,10 +1160,10 @@ function RouteDetail() {
           </div>
           <div className="stats-grid">
             {[
-              ["Fare", money(route.fare)],
-              ["Total time", `${route.totalMinutes} min`],
+              ["Fare", dash(money(route.fare))],
+              ["Total time", dash(`${route.totalMinutes} min`)],
               ["Transfers", String(route.transfers)],
-              ["Walking", `${route.walkingMinutes} min`],
+              ["Walking", dash(`${route.walkingMinutes} min`)],
             ].map(([a, b]) => (
               <div className="stat card">
                 <span>{a}</span>
@@ -1162,6 +1172,12 @@ function RouteDetail() {
             ))}
           </div>
           <Section title="Route overview">
+            {incomplete && (
+              <div className="card inline-empty">
+                This route is incomplete. The steps, fare and travel time
+                haven't been collected yet.
+              </div>
+            )}
             <div className="timeline">
               {route.steps.map((s, i) => (
                 <div className="step" key={i}>
@@ -1177,6 +1193,7 @@ function RouteDetail() {
               ))}
             </div>
           </Section>
+          {!incomplete && (
           <div className="card info-card">
             <h3>Weather exposure</h3>
             <p>
@@ -1189,6 +1206,7 @@ function RouteDetail() {
             </p>
             <RouteLine />
           </div>
+          )}
           <Section title="Experience & tips">
             <div className="chips">
               {route.tags.map((t) => (
@@ -1227,16 +1245,16 @@ function RouteDetail() {
           <h3>Route summary</h3>
           <div className="summary-stats">
             <p>
-              Fare <b>{money(route.fare)}</b>
+              Fare <b>{dash(money(route.fare))}</b>
             </p>
             <p>
-              Total time <b>{route.totalMinutes} min</b>
+              Total time <b>{dash(`${route.totalMinutes} min`)}</b>
             </p>
             <p>
               Transfers <b>{route.transfers}</b>
             </p>
             <p>
-              Walking <b>{route.walkingMinutes} min</b>
+              Walking <b>{dash(`${route.walkingMinutes} min`)}</b>
             </p>
           </div>
           <Button onClick={() => save(id)}>
