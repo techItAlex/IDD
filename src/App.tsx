@@ -50,6 +50,7 @@ import {
 import homeTransitImage from "./assets/images/illustrations/home-transit.png";
 import { routes as seed, users, type Route, type Question } from "./data";
 import { useApp } from "./store";
+import { LogoMark } from "./Logo";
 import { getImage } from "./lib/images";
 const cx = (...a: (string | false | undefined)[]) =>
   a.filter(Boolean).join(" ");
@@ -494,7 +495,7 @@ function Shell() {
     <>
       <header className="topnav">
         <Link to="/" className="brand">
-          <span className="brand-mark">idd</span>
+          <span className="brand-mark"><LogoMark /></span>
           <span>
             <b>isang daang daan</b>
             <small>COMMUTE BETTER, TOGETHER.</small>
@@ -616,7 +617,7 @@ function Home() {
     <>
       <div className="mobile-brand">
         <Link to="/" className="brand">
-          <span className="brand-mark">idd</span>
+          <span className="brand-mark"><LogoMark /></span>
           <span>
             <b>isang daang daan</b>
             <small>COMMUTE BETTER, TOGETHER.</small>
@@ -2376,7 +2377,7 @@ function Login({ returnTo }: { returnTo?: string }) {
       </div>
       <div className="login-card">
         <div className="brand">
-          <span className="brand-mark">idd</span>
+          <span className="brand-mark"><LogoMark /></span>
           <b>isang daang daan</b>
         </div>
         <p className="eyebrow">WELCOME TO THE COMMUNITY</p>

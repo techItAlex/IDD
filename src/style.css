@@ -163,6 +163,10 @@ select:focus-visible {
   letter-spacing: -0.04em;
   box-shadow: 0 6px 14px -6px rgba(13, 59, 42, 0.7);
 }
+.brand-mark svg {
+  width: 27px;
+  height: auto;
+}
 .brand b {
   display: block;
   font-size: 15px;
