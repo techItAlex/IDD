@@ -2,6 +2,7 @@ import type { Mode, Route } from "../data";
 
 export const TAGS = [
   "Fast",
+  "Slow",
   "Cheapest",
   "Beginner friendly",
   "Sheltered",

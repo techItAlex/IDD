@@ -74,6 +74,7 @@ function Mode({ mode }: { mode: string }) {
     lrt: Train,
     uv: Car,
     taxi: Car,
+    tricycle: Car,
     train: Train,
     walk: Footprints,
   };

@@ -1,7 +1,7 @@
 import { buildRoutes } from "./lib/buildRoute";
 import { collectedRoutes } from "./collected-routes";
 export type Mode =
-  "jeepney" | "bus" | "mrt" | "lrt" | "uv" | "taxi" | "train" | "walk";
+  "jeepney" | "bus" | "mrt" | "lrt" | "uv" | "taxi" | "tricycle" | "train" | "walk";
 export type Route = {
   id: string;
   title: string;
