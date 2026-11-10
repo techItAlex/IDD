@@ -13,12 +13,19 @@ type Answer = {
   text: string;
   timeAgo: string;
   upvotes: number;
+  image?: string;
   replies: { id: string; text: string; authorId: string }[];
 };
+// Reports needed before a guide or answer is flagged for moderation.
+export const REPORT_LIMIT = 3;
 type State = {
   isLoggedIn: boolean;
   hasEntered: boolean;
   seenWelcome: boolean;
+  profile: { name: string; email: string };
+  reports: Record<string, number>;
+  reported: string[];
+  promotedIds: string[];
   points: number;
   savedRouteIds: string[];
   compareIds: string[];
@@ -42,8 +49,11 @@ type State = {
   compare: (id: string) => void;
   upvote: (id: string) => void;
   deleteRoute: (id: string) => void;
+  report: (id: string) => void;
+  promote: (id: string) => void;
+  updateProfile: (p: { name: string; email: string }) => void;
   postQuestion: (q: Question) => void;
-  postAnswer: (qid: string, text: string) => void;
+  postAnswer: (qid: string, text: string, image?: string) => void;
   accept: (qid: string, aid: string) => void;
   setWizard: (v: any) => void;
 };
@@ -151,6 +161,11 @@ const start = () => ({
   isLoggedIn: false,
   hasEntered: false,
   seenWelcome: false,
+  profile: { name: "Alex Santos", email: "alex@email.com" },
+  // sample community reports so the moderation threshold can be demonstrated
+  reports: { r8: 2, a5: 2 },
+  reported: [],
+  promotedIds: [],
   points: 320,
   savedRouteIds: [],
   compareIds: ["r1", "r2"],
@@ -274,11 +289,47 @@ export const useApp = create<State>()(
         }));
         get().addToast("Route deleted");
       },
+      report: (id) => {
+        if (!get().isLoggedIn) {
+          get().requireLogin(() => get().report(id));
+          return;
+        }
+        if (get().reported.includes(id)) {
+          get().addToast("You already reported this");
+          return;
+        }
+        set((s) => ({
+          reported: [...s.reported, id],
+          reports: { ...s.reports, [id]: (s.reports[id] || 0) + 1 },
+        }));
+        get().addToast(
+          (get().reports[id] || 0) >= REPORT_LIMIT
+            ? "Thanks. It's now flagged for review"
+            : "Thanks for the report. The community will review it",
+        );
+      },
+      promote: (id) => {
+        if (!get().isLoggedIn) {
+          get().requireLogin(() => get().promote(id));
+          return;
+        }
+        const was = get().promotedIds.includes(id);
+        set((s) => ({
+          promotedIds: was
+            ? s.promotedIds.filter((x) => x !== id)
+            : [...s.promotedIds, id],
+        }));
+        get().addToast(was ? "Guide promotion removed" : "Guide promoted");
+      },
+      updateProfile: (profile) => {
+        set({ profile });
+        get().addToast("Profile updated");
+      },
       postQuestion: (q) => {
         set((s) => ({ questions: [q, ...s.questions], points: s.points + 5 }));
         get().addToast("Your question has been posted!");
       },
-      postAnswer: (qid, text) => {
+      postAnswer: (qid, text, image) => {
         const id = "a" + Date.now();
         set((s) => ({
           answers: {
@@ -288,6 +339,7 @@ export const useApp = create<State>()(
               questionId: qid,
               authorId: "u-alex",
               text,
+              image,
               timeAgo: "Just now",
               upvotes: 0,
               replies: [],

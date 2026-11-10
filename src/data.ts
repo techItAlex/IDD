@@ -20,6 +20,7 @@ export type Route = {
   description?: string;
   dateChecked?: string;
   source?: string;
+  mapUrl?: string;
   imageKey?: string;
   imageUrl?: string;
   rating: number;
@@ -369,6 +370,7 @@ export type Question = {
   timeAgo: string;
   upvotes: number;
   routeId?: string;
+  image?: string;
   answerIds: string[];
   acceptedAnswerId?: string;
 };

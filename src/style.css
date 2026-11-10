@@ -3368,3 +3368,88 @@ body:has(.login-layout) .page {
   border-radius: 4px;
   background: var(--green);
 }
+
+/* ---------- Placeholder image, photo input, moderation ---------- */
+.route-image .ph-logo {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  width: 34%;
+  max-width: 140px;
+  height: auto;
+  transform: translate(-50%, -50%);
+  color: rgba(20, 81, 58, 0.16);
+}
+.route-image .ph-note {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(20, 81, 58, 0.45);
+}
+.photo-input {
+  display: grid;
+  gap: 10px;
+}
+.photo-preview-wrap {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+}
+.photo-preview-wrap .photo-preview {
+  display: block;
+}
+.photo-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(13, 30, 22, 0.7);
+  color: #fff;
+}
+.answer-card .photo-preview,
+.thread-card .photo-preview {
+  max-height: 260px;
+  width: auto;
+  max-width: 100%;
+  border-radius: 14px;
+}
+.promoted-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 11px;
+  border-radius: 999px;
+  background: var(--amber-soft);
+  color: #8a5a00;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.route-meta {
+  flex-wrap: wrap;
+}
+.under-review,
+.flagged-note {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fdebc8;
+  color: #94590a;
+  font-size: 13px;
+  font-weight: 600;
+}
+.answer-card.flagged > p {
+  opacity: 0.55;
+}
+.report-btn {
+  justify-self: center;
+  color: var(--muted);
+  font-size: 13px;
+}

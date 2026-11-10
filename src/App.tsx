@@ -48,14 +48,25 @@ import {
   Menu,
 } from "lucide-react";
 import homeTransitImage from "./assets/images/illustrations/home-transit.png";
-import { routes as seed, users, type Route, type Question } from "./data";
-import { useApp } from "./store";
+import { users, type Route, type Question } from "./data";
+import { useApp, REPORT_LIMIT } from "./store";
 import { LogoMark } from "./Logo";
 import { getImage } from "./lib/images";
+import { readPhoto } from "./lib/photo";
 const cx = (...a: (string | false | undefined)[]) =>
   a.filter(Boolean).join(" ");
 const money = (n: number) => `₱${n}`;
-const person = (id: string) => users.find((u) => u.id === id) || users[0];
+const person = (id: string) => {
+  const u = users.find((x) => x.id === id) || users[0];
+  return id === "u-alex" ? { ...u, name: useApp.getState().profile.name } : u;
+};
+// A guide with enough community reports is flagged "For checking".
+function useStatus(route: Route): Route["status"] {
+  const reports = useApp((s) => s.reports[route.id] || 0);
+  return reports >= REPORT_LIMIT && route.status !== "incomplete"
+    ? "checking"
+    : route.status;
+}
 function Status({ status }: { status: Route["status"] }) {
   const labels: any = {
     verified: "Verified",
@@ -106,19 +117,70 @@ function Avatar({ name = "Alex Santos" }: { name?: string }) {
   );
 }
 function AppImage({ route, large = false }: { route: Route; large?: boolean }) {
-  const image = getImage(`routes/${route.id}`);
+  const image = route.imageUrl || getImage(`routes/${route.id}`);
   return (
     <div className={cx("route-image", large && "large")}>
       {image ? (
         <img src={image} loading="lazy" alt={route.title} />
       ) : (
         <>
-          <div className="skyline">▥　▦　▥　▧　▥</div>
-          <div className="mini-jeep">🚌</div>
+          <LogoMark className="ph-logo" />
+          <small className="ph-note">Photo coming soon</small>
           <span>
             {route.origin} → {route.destination}
           </span>
         </>
+      )}
+    </div>
+  );
+}
+function PhotoInput({
+  value,
+  onChange,
+  label = "Add photo",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  label?: string;
+}) {
+  const [error, setError] = useState("");
+  return (
+    <div className="photo-input">
+      <label className="upload">
+        <Camera size={17} /> {value ? "Change photo" : label}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file) return;
+            try {
+              onChange(await readPhoto(file));
+              setError("");
+            } catch {
+              setError("Could not read that image. Try another photo.");
+            }
+          }}
+        />
+      </label>
+      {value && (
+        <div className="photo-preview-wrap">
+          <img className="photo-preview" src={value} alt="Selected" />
+          <button
+            type="button"
+            className="photo-remove"
+            aria-label="Remove photo"
+            onClick={() => onChange("")}
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
       )}
     </div>
   );
@@ -237,7 +299,9 @@ function CommuteSearch() {
 }
 function RouteCard({ route, full = false }: { route: Route; full?: boolean }) {
   const save = useApp((s) => s.save),
-    saved = useApp((s) => s.savedRouteIds.includes(route.id));
+    saved = useApp((s) => s.savedRouteIds.includes(route.id)),
+    promoted = useApp((s) => s.promotedIds.includes(route.id)),
+    status = useStatus(route);
   return (
     <article className={"card route-card " + (full ? "full" : "")}>
       <Link to={"/route/" + route.id} className="route-card-main">
@@ -268,7 +332,8 @@ function RouteCard({ route, full = false }: { route: Route; full?: boolean }) {
             </div>
           )}
           <div className="route-meta">
-            <Status status={route.status} />
+            <Status status={status} />
+            {promoted && <span className="promoted-badge">Promoted</span>}
             <span>
               <Star size={14} fill="currentColor" className="star" />{" "}
               {route.ratingCount ? `${route.rating} (${route.ratingCount})` : "New"}
@@ -487,6 +552,7 @@ function Shell() {
     logged = useApp((s) => s.isLoggedIn),
     hasEntered = useApp((s) => s.hasEntered),
     seenWelcome = useApp((s) => s.seenWelcome),
+    profileName = useApp((s) => s.profile.name),
     open = useApp((s) => s.requireLogin),
     unread = useApp((s) => s.isLoggedIn && s.notifications.some((n) => !n.read));
   useEffect(() => {
@@ -524,7 +590,7 @@ function Shell() {
         </Link>
         {logged ? (
           <Link to="/profile">
-            <Avatar />
+            <Avatar name={profileName} />
           </Link>
         ) : (
           <Button
@@ -611,6 +677,9 @@ function Home() {
     nav = useNavigate(),
     unread = useApp((s) => s.isLoggedIn && s.notifications.some((n) => !n.read)),
     questions = useApp((s) => s.questions),
+    routes = useApp((s) => s.routes),
+    promotedIds = useApp((s) => s.promotedIds),
+    firstName = useApp((s) => s.profile.name.split(" ")[0]),
     hour = new Date().getHours(),
     greeting =
       hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
@@ -638,7 +707,7 @@ function Home() {
         <div className="hero-copy">
           <p className="eyebrow">COMMUTE BETTER, TOGETHER</p>
           <h1>
-            {greeting}, {logged ? "Alex" : "Commuter"}!
+            {greeting}, {logged ? firstName : "Commuter"}!
           </h1>
           <p className="hero-lead">Where do you need to go?</p>
           <CommuteSearch />
@@ -662,8 +731,8 @@ function Home() {
       </section>
       <Section title="Trending routes" action="See all" to="/guides">
         <div className="trending-grid">
-          {seed
-            .filter((r) => r.trending)
+          {routes
+            .filter((r) => r.trending || promotedIds.includes(r.id))
             .map((r) => (
               <RouteCard key={r.id} route={r} />
             ))}
@@ -810,7 +879,8 @@ function Guides() {
     set = useApp.setState,
     nav = useNavigate(),
     [show, setShow] = useState(false),
-    [chip, setChip] = useState("All");
+    [chip, setChip] = useState("All"),
+    promoted = useApp((s) => s.promotedIds);
   let list = [...useApp.getState().routes];
   if (f.modes.length)
     list = list.filter((r) => f.modes.some((m) => r.modes.includes(m as any)));
@@ -829,6 +899,11 @@ function Guides() {
       (a, b) =>
         ({ sheltered: 0, partial: 1, exposed: 2 })[a.exposure] -
         { sheltered: 0, partial: 1, exposed: 2 }[b.exposure],
+    );
+  if (f.sort === "Recommended" && chip === "All")
+    list.sort(
+      (a, b) =>
+        Number(promoted.includes(b.id)) - Number(promoted.includes(a.id)),
     );
   list.sort(
     (a, b) => Number(a.status === "incomplete") - Number(b.status === "incomplete"),
@@ -1118,7 +1193,10 @@ function RouteDetail() {
   const questions = useApp((s) => s.questions);
   const linked = questions.filter((q) => q.routeId === id);
   const incomplete = route.status === "incomplete",
-    dash = (v: string) => (incomplete ? "—" : v);
+    dash = (v: string) => (incomplete ? "—" : v),
+    status = useStatus(route),
+    flagged = status === "checking" && route.status !== "checking",
+    promoted = useApp((s) => s.promotedIds.includes(id));
   return (
     <>
       <Header
@@ -1150,7 +1228,8 @@ function RouteDetail() {
                 {route.origin} <ArrowRight size={15} /> {route.destination}
               </p>
               <div className="route-meta">
-                <Status status={route.status} />
+                <Status status={status} />
+                {promoted && <span className="promoted-badge">Promoted</span>}
                 <span>
                   <Star className="star" fill="currentColor" size={15} />{" "}
                   {route.ratingCount
@@ -1173,7 +1252,22 @@ function RouteDetail() {
               </div>
             ))}
           </div>
+          {flagged && (
+            <div className="card inline-empty flagged-note">
+              This guide was reported by the community and is under review.
+            </div>
+          )}
           <Section title="Route overview">
+            {route.mapUrl && (
+              <a
+                className="text-link"
+                href={route.mapUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View on map →
+              </a>
+            )}
             {incomplete && (
               <div className="card inline-empty">
                 This route is incomplete. The steps, fare and travel time
@@ -1264,6 +1358,12 @@ function RouteDetail() {
           </Button>
           <Button
             kind="outline"
+            onClick={() => useApp.getState().promote(id)}
+          >
+            {promoted ? "Remove promotion" : "Promote this guide"}
+          </Button>
+          <Button
+            kind="outline"
             onClick={() => open(() => nav(`/route/${id}/ask`))}
           >
             Ask about this route
@@ -1288,6 +1388,12 @@ function RouteDetail() {
           >
             Helpful 👍 ({route.helpfulCount})
           </Button>
+          <button
+            className="text-btn report-btn"
+            onClick={() => useApp.getState().report(id)}
+          >
+            Report a problem
+          </button>
         </aside>
       </div>
       <div className="sticky-actions">
@@ -1357,6 +1463,7 @@ function AskForm({ routeId }: { routeId?: string }) {
         timeAgo: "Just now",
         upvotes: 0,
         routeId,
+        image: photo || undefined,
         answerIds: [],
       });
       nav("/question/" + id);
@@ -1429,19 +1536,7 @@ function AskForm({ routeId }: { routeId?: string }) {
           </button>
         ))}
       </div>
-      <label className="upload">
-        {" "}
-        <Camera size={17} /> Add photo
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) =>
-            e.target.files?.[0] &&
-            setPhoto(URL.createObjectURL(e.target.files[0]))
-          }
-        />
-      </label>
-      {photo && <img className="photo-preview" src={photo} />}
+      <PhotoInput value={photo} onChange={setPhoto} />
       <Button disabled={!title.trim()}>
         <Send size={16} /> Post question
       </Button>
@@ -1581,6 +1676,7 @@ function Thread() {
     q = store.questions.find((x) => x.id === id),
     [reply, setReply] = useState(""),
     [answer, setAnswer] = useState(false),
+    [answerPhoto, setAnswerPhoto] = useState(""),
     [text, setText] = useState("");
   if (!q)
     return (
@@ -1609,6 +1705,9 @@ function Thread() {
             </div>
             <h1>{q.title}</h1>
             <p>{q.body}</p>
+            {q.image && (
+              <img className="photo-preview" src={q.image} alt="Question" />
+            )}
             <div className="chips">
               {q.tags.map((t) => (
                 <span className="tag">#{t}</span>
@@ -1649,6 +1748,7 @@ function Thread() {
                 className={cx(
                   "card answer-card",
                   q.acceptedAnswerId === a.id && "accepted",
+                  (store.reports[a.id] || 0) >= REPORT_LIMIT && "flagged",
                 )}
               >
                 <div className="answer-author">
@@ -1666,7 +1766,15 @@ function Thread() {
                     </span>
                   )}
                 </div>
+                {(store.reports[a.id] || 0) >= REPORT_LIMIT && (
+                  <div className="under-review">
+                    Under review · reported by the community
+                  </div>
+                )}
                 <p>{a.text}</p>
+                {a.image && (
+                  <img className="photo-preview" src={a.image} alt="Answer" />
+                )}
                 <div className="answer-controls">
                   <button onClick={() => store.upvote(a.id)}>
                     ▲ {a.upvotes}
@@ -1679,6 +1787,7 @@ function Thread() {
                       Mark as accepted
                     </button>
                   )}
+                  <button onClick={() => store.report(a.id)}>Report</button>
                 </div>
                 {a.replies?.map((rep) => (
                   <div className="reply">
@@ -1753,11 +1862,17 @@ function Thread() {
             onChange={(e) => setText(e.target.value)}
             placeholder="Share helpful details..."
           />
+          <PhotoInput
+            value={answerPhoto}
+            onChange={setAnswerPhoto}
+            label="Add photo of the stop or route"
+          />
           <Button
             disabled={!text.trim()}
             onClick={() => {
-              store.postAnswer(q.id, text);
+              store.postAnswer(q.id, text, answerPhoto || undefined);
               setText("");
+              setAnswerPhoto("");
               setAnswer(false);
             }}
           >
@@ -2006,6 +2121,9 @@ function Wizard() {
       ],
       tags: d.tags || [],
       tips: d.tips ? [d.tips] : [],
+      description: d.description || undefined,
+      imageUrl: d.photo || undefined,
+      mapUrl: d.mapUrl || undefined,
       rating: 0,
       ratingCount: 0,
       status: "pending",
@@ -2177,6 +2295,19 @@ function Wizard() {
                 value={d.description || ""}
                 onChange={(e) => update("description", e.target.value)}
               />
+              <label>Photo of the route or stop (optional)</label>
+              <PhotoInput
+                value={d.photo || ""}
+                onChange={(v) => update("photo", v)}
+                label="Add a route photo"
+              />
+              <label>Map link (optional)</label>
+              <input
+                type="url"
+                value={d.mapUrl || ""}
+                onChange={(e) => update("mapUrl", e.target.value)}
+                placeholder="Paste a Google Maps link to the stop or route"
+              />
             </>
           )}
           {idx === 3 && (
@@ -2191,6 +2322,10 @@ function Wizard() {
               <p>Modes: {(d.modes || []).join(", ")}</p>
               <p>{d.description}</p>
               <p>Tips: {d.tips}</p>
+              {d.photo && (
+                <img className="photo-preview" src={d.photo} alt="Route" />
+              )}
+              {d.mapUrl && <p>Map: {d.mapUrl}</p>}
             </div>
           )}
           <div className="wizard-controls">
@@ -2230,6 +2365,7 @@ function Wizard() {
               steps: [],
               tags: d.tags || [],
               tips: [],
+              imageUrl: d.photo || undefined,
               rating: 0,
               ratingCount: 0,
               status: "pending",
@@ -2502,9 +2638,41 @@ function Login({ returnTo }: { returnTo?: string }) {
     </div>
   );
 }
+function ProfileEditor({ close }: { close: () => void }) {
+  const profile = useApp((s) => s.profile),
+    update = useApp((s) => s.updateProfile),
+    [name, setName] = useState(profile.name),
+    [email, setEmail] = useState(profile.email),
+    valid = name.trim().length > 1 && /^\S+@\S+\.\S+$/.test(email.trim());
+  return (
+    <Modal title="Edit profile" close={close}>
+      <form
+        className="login-fields"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!valid) return;
+          update({ name: name.trim(), email: email.trim() });
+          close();
+        }}
+      >
+        <label>Display name</label>
+        <input value={name} onChange={(e) => setName(e.target.value)} />
+        <label>Email address</label>
+        <input
+          type="text"
+          inputMode="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <Button disabled={!valid}>Save changes</Button>
+      </form>
+    </Modal>
+  );
+}
 function Profile() {
   const store = useApp(),
     [tab, setTab] = useState("Contributions"),
+    [editing, setEditing] = useState(false),
     nav = useNavigate();
   if (!store.isLoggedIn)
     return (
@@ -2532,8 +2700,8 @@ function Profile() {
       />
       <div className="profile-layout">
         <aside className="profile-sidebar card">
-          <Avatar name="Alex Santos" />
-          <h2>Alex Santos</h2>
+          <Avatar name={store.profile.name} />
+          <h2>{store.profile.name}</h2>
           <Status status="unverified" />
           <p>Level 2 Contributor</p>
           <div className="points-card">
@@ -2548,6 +2716,9 @@ function Profile() {
             </div>
             <small>{500 - (store.points % 500)} to next level</small>
           </div>
+          <Button kind="outline" onClick={() => setEditing(true)}>
+            Edit profile
+          </Button>
           <Button
             kind="outline"
             onClick={() => {
@@ -2633,6 +2804,7 @@ function Profile() {
           )}
         </section>
       </div>
+      {editing && <ProfileEditor close={() => setEditing(false)} />}
     </>
   );
 }
@@ -2839,11 +3011,11 @@ function Settings() {
       <Header title="Settings" />
       <div className="settings-list card">
         <div className="settings-account">
-          <Avatar name={store.isLoggedIn ? "Alex Santos" : "Guest"} />
+          <Avatar name={store.isLoggedIn ? store.profile.name : "Guest"} />
           <span>
-            <b>{store.isLoggedIn ? "Alex Santos" : "Guest"}</b>
+            <b>{store.isLoggedIn ? store.profile.name : "Guest"}</b>
             <small>
-              {store.isLoggedIn ? "alex@email.com" : "Not signed in"}
+              {store.isLoggedIn ? store.profile.email : "Not signed in"}
             </small>
           </span>
           <button
