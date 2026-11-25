@@ -2862,9 +2862,9 @@ body:has(.login-layout) .page {
   height: 24px;
   border-radius: 50%;
   background: #fff;
-  color: #4285f4;
-  font-size: 14px;
-  font-weight: 800;
+}
+.google-mark svg {
+  display: block;
 }
 .mode-link {
   align-self: center;
