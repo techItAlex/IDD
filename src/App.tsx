@@ -1085,6 +1085,7 @@ function FilterPanel({ mobile = false }: { mobile?: boolean }) {
     </div>
   );
 }
+const GUIDES_FIRST = 12;
 function Guides() {
   const f = useApp((s) => s.filter),
     set = useApp.setState,
@@ -1098,12 +1099,24 @@ function Guides() {
       f.modes.length +
       (f.time !== "Any" ? 1 : 0) +
       (SORT_CHIPS.some(([, sort]) => sort === f.sort) ? 0 : 1);
-  // With no filters applied, start with the guides that have a photo, plus your own.
+  // With no filters applied, start with the first few guides that have a photo
+  // (plus the ones you submitted), and let "See all" show the rest.
   const browsing =
     !f.modes.length && f.time === "Any" && f.sort === "Recommended";
-  const hasPhoto = (r: Route) =>
-    !!(r.imageUrl || getImage(`routes/${r.id}`)) || r.authorId === "u-alex";
-  const visible = browsing && !showAll ? list.filter(hasPhoto) : list;
+  const hasPhoto = (r: Route) => !!(r.imageUrl || getImage(`routes/${r.id}`));
+  const collapse = () => {
+    setShowAll(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  let firstFew = 0;
+  const visible =
+    browsing && !showAll
+      ? list.filter(
+          (r) =>
+            r.authorId === "u-alex" ||
+            (hasPhoto(r) && firstFew++ < GUIDES_FIRST),
+        )
+      : list;
   return (
     <>
       <Header
@@ -1150,6 +1163,11 @@ function Guides() {
                 ? `Showing ${visible.length} of ${list.length} route guides`
                 : `${list.length} route guides`}
             </b>
+            {browsing && showAll && (
+              <button className="text-btn" onClick={collapse}>
+                Show fewer
+              </button>
+            )}
           </div>
           {visible.length ? (
             <>
@@ -1169,9 +1187,9 @@ function Guides() {
               {browsing && showAll && (
                 <button
                   className="btn outline see-all"
-                  onClick={() => setShowAll(false)}
+                  onClick={collapse}
                 >
-                  Show only guides with photos
+                  Show fewer guides
                 </button>
               )}
             </>
@@ -1838,6 +1856,10 @@ function Community() {
   const nav = useNavigate();
   useEffect(() => setShowAll(false), [kind, tag, query]);
   const visible = showAll ? list : list.slice(0, QUESTIONS_PER_PAGE);
+  const collapse = () => {
+    setShowAll(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   return (
     <>
       <Header
@@ -1881,6 +1903,14 @@ function Community() {
               </button>
             ))}
           </div>
+          {showAll && list.length > QUESTIONS_PER_PAGE && (
+            <div className="list-toggle-row">
+              <span>Showing all {list.length} questions</span>
+              <button className="text-btn" onClick={collapse}>
+                Show fewer
+              </button>
+            </div>
+          )}
           <div className="community-list">
             {list.length ? (
               visible.map((q) => <QuestionCard key={q.id} q={q} />)
@@ -1896,7 +1926,7 @@ function Community() {
           {list.length > QUESTIONS_PER_PAGE && (
             <button
               className="btn outline see-all"
-              onClick={() => setShowAll(!showAll)}
+              onClick={() => (showAll ? collapse() : setShowAll(true))}
             >
               {showAll
                 ? "Show fewer questions"
@@ -2988,6 +3018,7 @@ function Profile() {
   const store = useApp(),
     [tab, setTab] = useState("Contributions"),
     [editing, setEditing] = useState(false),
+    [allActivity, setAllActivity] = useState(false),
     nav = useNavigate();
   if (!store.isLoggedIn)
     return (
@@ -3088,16 +3119,32 @@ function Profile() {
               </div>
               <Section title="Recent activity">
                 {submitted.length ? (
-                  submitted.map((r) => (
-                    <Link to={"/my-guide/" + r.id} className="activity card">
-                      <Map />
-                      <span>
-                        <b>{r.title}</b>
-                        <small>Route guide · submitted just now</small>
-                      </span>
-                      <Status status="pending" />
-                    </Link>
-                  ))
+                  <>
+                    {(allActivity ? submitted : submitted.slice(0, 3)).map((r) => (
+                      <Link
+                        key={r.id}
+                        to={"/my-guide/" + r.id}
+                        className="activity card"
+                      >
+                        <Map />
+                        <span>
+                          <b>{r.title}</b>
+                          <small>Route guide · submitted just now</small>
+                        </span>
+                        <Status status="pending" />
+                      </Link>
+                    ))}
+                    {submitted.length > 3 && (
+                      <button
+                        className="btn outline see-all"
+                        onClick={() => setAllActivity(!allActivity)}
+                      >
+                        {allActivity
+                          ? "Show fewer"
+                          : `See all ${submitted.length} contributions`}
+                      </button>
+                    )}
+                  </>
                 ) : (
                   <p className="muted">
                     Your recent contributions will show here.

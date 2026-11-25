@@ -3700,3 +3700,21 @@ body:has(.login-layout) .page {
     letter-spacing: 0.02em;
   }
 }
+
+/* ---------- Show fewer controls ---------- */
+.results-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.list-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
